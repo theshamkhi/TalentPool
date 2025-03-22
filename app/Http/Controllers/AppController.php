@@ -8,6 +8,8 @@ use App\Models\Offer;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\AppStatusUpdated;
+use Illuminate\Support\Facades\Mail;
 
 class AppController extends Controller
 {
@@ -70,5 +72,37 @@ class AppController extends Controller
         }
 
         return response()->json(['data' => $apps], 200);
+    }
+
+    public function updateAppStatus(Request $request, $appID)
+    {
+        $recruiter = Auth::user();
+
+        if ($recruiter->role !== 'recruiter') {
+            return response()->json(['message' => 'Only recruiters can update application status.'], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:pending,reviewed,accepted,rejected',
+        ]);
+
+        $application = App::find($appID);
+
+        if (!$application) {
+            return response()->json(['message' => 'Application not found.'], 404);
+        }
+
+        $offer = Offer::where('id', $application->offer_id)->where('recruiter_id', $recruiter->id)->first();
+
+        if (!$offer) {
+            return response()->json(['message' => 'You are not allowed to edit this application.'], 403);
+        }
+
+        $application->status = $request->status;
+        $application->save();
+
+        Mail::to($application->candidate->email)->send(new AppStatusUpdated($application));
+
+        return response()->json(['message' => 'Application status successfully updated!', 'data' => $application], 200);
     }
 }
