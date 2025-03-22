@@ -105,4 +105,52 @@ class AppController extends Controller
 
         return response()->json(['message' => 'Application status successfully updated!', 'data' => $application], 200);
     }
+
+    public function getRecruiterStats()
+    {
+        $recruiter = Auth::user();
+
+        if ($recruiter->role !== 'recruiter') {
+            return response()->json(['message' => 'Only recruiters can access these statistics.'], 403);
+        }
+
+        $offers = Offer::where('recruiter_id', $recruiter->id)->get();
+
+        // Initialize statistics
+        $statistics = [
+            'total_offers' => $offers->count(),
+            'total_applications' => 0,
+            'applications_by_status' => [
+                'pending' => 0,
+                'reviewed' => 0,
+                'accepted' => 0,
+                'rejected' => 0,
+            ],
+            'applications_by_offer' => [],
+        ];
+
+        // Calculate statistics
+        foreach ($offers as $offer) {
+            $applications = App::where('offer_id', $offer->id)->get();
+
+            $statistics['total_applications'] += $applications->count();
+
+            foreach ($applications as $application) {
+                $statistics['applications_by_status'][$application->status]++;
+            }
+
+            $statistics['applications_by_offer'][] = [
+                'offer_title' => $offer->title,
+                'total_applications' => $applications->count(),
+                'applications_by_status' => [
+                    'pending' => $applications->where('status', 'pending')->count(),
+                    'reviewed' => $applications->where('status', 'reviewed')->count(),
+                    'accepted' => $applications->where('status', 'accepted')->count(),
+                    'rejected' => $applications->where('status', 'rejected')->count(),
+                ],
+            ];
+        }
+
+        return response()->json(['data' => $statistics], 200);
+    }
 }
