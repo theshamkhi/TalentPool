@@ -18,4 +18,6 @@ Route::post('/offer/{offerID}/apply', [AppController::class, 'apply'])->middlewa
 
 Route::delete('/applications/{appID}/withdraw', [AppController::class, 'withdraw'])->middleware('auth:sanctum');
 
-Route::get('/recruiter/applications', [AppController::class, 'getApps'])->middleware('auth:sanctum');
+Route::get('/recruiter/applications', [AppController::class, 'getApps'])->middleware('auth:sanctum');//->(recruiter)
+
+Route::put('/applications/{appID}/updateStatus', [AppController::class, 'updateAppStatus'])->middleware('auth:sanctum');
