@@ -9,6 +9,8 @@ use App\Http\Controllers\AppController;
 // A U T H
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'sendReset']);
+Route::post('/reset-password', [AuthController::class, 'passReset']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
