@@ -15,7 +15,12 @@ class Offer extends Model
         'recruiter_id',
     ];
 
-    public function user(): BelongsTo
+    public function applications()
+    {
+        return $this->hasMany(App::class);
+    }
+    
+    public function recruiter()
     {
         return $this->belongsTo(User::class, 'recruiter_id');
     }

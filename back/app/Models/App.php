@@ -19,9 +19,9 @@ class App extends Model
     {
         return $this->belongsTo(User::class, 'candidate_id');
     }
-
+    
     public function offer()
     {
-        return $this->belongsTo(Offer::class, 'offer_id');
+        return $this->belongsTo(Offer::class);
     }
 }

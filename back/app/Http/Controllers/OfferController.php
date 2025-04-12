@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Offer;
+use Illuminate\Support\Facades\Auth;
 
 class OfferController extends Controller
 {
@@ -13,55 +14,51 @@ class OfferController extends Controller
         return response()->json($offers);
     }
 
-    public function show($id)
+    public function show(Offer $offer)
     {
-        $offer = Offer::find($id);
-        if (!$offer) {
-            return response()->json(['message' => 'Offer not found'], 404);
-        }
         return response()->json($offer);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string',
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'location' => 'required|string',
-            'requirements' => 'required|string',
-            'recruiter_id' => 'integer|exists:users,id',
+            'location' => 'required|string|max:255',
+            'requirements' => 'required|string'
         ]);
 
-        $offer = Offer::create($request->all());
+        $offer = Offer::create([
+            ...$validated,
+            'recruiter_id' => Auth::id()
+        ]);
+
         return response()->json($offer, 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Offer $offer)
     {
-        $offer = Offer::find($id);
-        if (!$offer) {
-            return response()->json(['message' => 'Offer not found'], 404);
+        if ($offer->recruiter_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate([
-            'title' => 'sometimes|required|string',
+        $validated = $request->validate([
+            'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'location' => 'sometimes|required|string',
-            'requirements' => 'sometimes|required|string',
-            'recruiter_id' => 'integer|exists:users,id',
+            'location' => 'sometimes|required|string|max:255',
+            'requirements' => 'sometimes|required|string'
         ]);
 
-        $offer->update($request->all());
+        $offer->update($validated);
         return response()->json($offer);
     }
 
-    public function destroy($id)
+    public function destroy(Offer $offer)
     {
-        $offer = Offer::find($id);
-        if (!$offer) {
-            return response()->json(['message' => 'Offer not found'], 404);
+        if ($offer->recruiter_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
-
+        
         $offer->delete();
         return response()->json(['message' => 'Offer removed']);
     }
